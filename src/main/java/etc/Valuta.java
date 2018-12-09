@@ -10,10 +10,12 @@ public class Valuta {
     }
 
     public double getStartPrice() {
+
         return startPrice;
     }
 
     public void setStartPrice(double startPrice) {
+
         this.startPrice = startPrice;
     }
 
@@ -22,6 +24,7 @@ public class Valuta {
     }
 
     public void setMinimalPrice(double minimalPrice) {
+
         this.minimalPrice = minimalPrice;
     }
 }
