@@ -29,8 +29,11 @@ public class Waiting4Request extends Behaviour {
 
         if (message != null){
             ACLMessage answer = message.createReply();
+            System.out.println("Agent " + agent.getLocalName() + " said: Hi, agent " + message.getSender().getLocalName() +
+                    "! I have some stuff, start price is " + bitCoin.get(0).getStartPrice() + "! Let's haggle?!");
             msgArrived = true;
             answer.setPerformative(ACLMessage.PROPOSE);
+            answer.setProtocol("stuffBuying");
             answer.setContent(bitCoin.get(0).getStartPrice() + "");
             agent.send(answer);
         }

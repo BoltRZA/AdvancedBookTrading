@@ -1,5 +1,6 @@
 package Agents;
 
+import TraderBehavoiors.FSM4Trader;
 import etc.Valuta;
 import jade.core.Agent;
 import jade.core.behaviours.DataStore;
@@ -14,12 +15,11 @@ public class AgentTrader extends Agent {
     @Override
     protected void setup() {
         super.setup();
-        addBehaviour(new FSMBehaviour());
         bitCoin = new ArrayList<Valuta>();
         createSettings4Traders(bitCoin);
         DataStore ds =new DataStore();
         ds.put("bitCoin", bitCoin);
-        addBehaviour(new FSMBehaviour(this));
+        addBehaviour(new FSM4Trader(this, ds));
     }
 
     private void createSettings4Traders(List<Valuta> bitCoin){

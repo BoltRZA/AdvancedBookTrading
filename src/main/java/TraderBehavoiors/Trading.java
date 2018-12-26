@@ -37,12 +37,13 @@ public class Trading extends Behaviour {
                 ACLMessage noBidding = message.createReply();
                 noBidding.setContent(message.getContent());
                 agent.send(noBidding);
+                block();
             }else {
                 priceGot = Double.parseDouble(message.getContent());
                 if (priceGot > minimum){
                     ACLMessage replyConfirm = message.createReply();
                     replyConfirm.setPerformative(ACLMessage.CONFIRM);
-                    int discount = 1 + (int) (Math.random() * 25);
+                    int discount = 1 + (int) (Math.random() * 10);
                     System.out.println("Agent " + agent.getLocalName() + " said: The discount is " + discount + "%");
                     replyConfirm.setContent(priceGot * discount / 100 + "");
                     agent.send(replyConfirm);
