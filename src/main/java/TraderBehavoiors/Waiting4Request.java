@@ -17,20 +17,21 @@ public class Waiting4Request extends Behaviour {
 
     public Waiting4Request(Agent agent, DataStore dataStore) {
         setDataStore(dataStore);
-        bitCoin = (List<Valuta>) dataStore.get("bitCoin");
         this.agent = agent;
     }
 
     @Override
     public void action() {
+        bitCoin = (List<Valuta>) getDataStore().get("bitCoin");
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol("stuffBuying"),
                 MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
         ACLMessage message = agent.receive(mt);
 
         if (message != null){
             ACLMessage answer = message.createReply();
-            System.out.println("Agent " + agent.getLocalName() + " said: Hi, agent " + message.getSender().getLocalName() +
-                    "! I have some stuff, start price is " + bitCoin.get(0).getStartPrice() + "! Let's haggle?!");
+            System.out.println("Agent " + agent.getLocalName() + " said: Hi, agent "
+                    + message.getSender().getLocalName() + "! I have some stuff, start price is "
+                    + bitCoin.get(0).getStartPrice() + "! Let's haggle?!");
             msgArrived = true;
             answer.setPerformative(ACLMessage.PROPOSE);
             answer.setProtocol("stuffBuying");
@@ -41,6 +42,7 @@ public class Waiting4Request extends Behaviour {
 
     @Override
     public boolean done() {
+
         return msgArrived;
     }
 }

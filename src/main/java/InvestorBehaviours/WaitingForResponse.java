@@ -16,11 +16,10 @@ public class WaitingForResponse extends Behaviour{
     private AID agentMinimal;
     private boolean bhvDone = false;
     private double rcvCNT;
+
     public WaitingForResponse(Agent agent, DataStore dataStore) {
         setDataStore(dataStore);
         this.agent = agent;
-        nowTraders = (List<AID>) dataStore.get("confirmedTraders");
-        rcvCNT = Double.parseDouble(getDataStore().get("tradersCounter").toString());
     }
 
     private List<AID> nowTraders;
@@ -28,13 +27,14 @@ public class WaitingForResponse extends Behaviour{
 
     @Override
     public void action() {
+        rcvCNT = Double.parseDouble(getDataStore().get("tradersCounter").toString());
+        nowTraders = (List<AID>) getDataStore().get("confirmedTraders");
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol("stuffBuying"), MessageTemplate.or(
                         MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
                         MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM)));
         ACLMessage response = agent.receive(mt);
-
-        if (response != null) {
-                if (response.getPerformative() == ACLMessage.CONFIRM) {
+        while (response != null) {
+            if (response.getPerformative() == ACLMessage.CONFIRM) {
                     rcvCNT--;
                     System.out.println("Agent " + agent.getLocalName() +" said: Agent's "
                             + response.getSender().getLocalName() + " price is:" + response.getContent());
@@ -66,9 +66,10 @@ public class WaitingForResponse extends Behaviour{
                 rcvCNT = nowTraders.size();
                 block();
                 }
-        } else {
-            block();
+        response = myAgent.receive(mt);
         }
+            block();
+
         if (nowTraders.size() == 1){
             System.out.println("Auction has been finished! The price is " + foundMinimal + " and the winner" +
                     " is "  + agentMinimal.getLocalName() );

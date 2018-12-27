@@ -13,7 +13,7 @@ import java.util.List;
 
 public class Waiting4Response extends Behaviour {
     private Agent agent;
-    public static double foundMinimal = 1000000000;
+    public static double foundMinimal = 100000000;
     private AID agentMinimal;
     private List<AID> confirmedTraders = new ArrayList<AID>();
     private boolean bhvDone = false;
@@ -22,12 +22,18 @@ public class Waiting4Response extends Behaviour {
     public Waiting4Response(Agent agent, DataStore dataStore) {
         setDataStore(dataStore);
         this.agent = agent;
-        rcvCNT = Double.parseDouble(getDataStore().get("tradersCounter").toString());
 
     }
 
     @Override
+    public void onStart() {
+        this.rcvCNT = (Double) getDataStore().get("tradersCounter");
+    }
+
+    @Override
     public void action() {
+
+//        rcvCNT = Double.parseDouble(getDataStore().get("tradersCounter").toString());
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE),
                 MessageTemplate.MatchProtocol("stuffBuying"));
 
@@ -42,7 +48,7 @@ public class Waiting4Response extends Behaviour {
 
             if (price < foundMinimal){
                 agentMinimal = message.getSender();
-                price = foundMinimal;
+                foundMinimal = price;
             }
         }else {
             block();
@@ -63,13 +69,15 @@ public class Waiting4Response extends Behaviour {
             System.out.println("Agent " + agent.getLocalName() + " said: The round 1 winner is " +
                     agentMinimal.getLocalName());
             ACLMessage accept = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+            accept.setProtocol("stuffBuying");
             accept.setContent(foundMinimal + "");
             accept.addReceiver(agentMinimal);
             agent.send(accept);
             ACLMessage reject = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
             reject.setContent(foundMinimal + "");
+            reject.setProtocol("stuffBuying");
             for (AID rec : confirmedTraders){
-                if (rec != agentMinimal){
+                if (!rec.equals(agentMinimal)){
                     reject.addReceiver(rec);
                 }
             }

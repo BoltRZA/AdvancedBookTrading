@@ -19,33 +19,37 @@ public class Trading extends Behaviour {
 
     public Trading(Agent agent, DataStore dataStore) {
         setDataStore(dataStore);
-        bitCoin = (List<Valuta>)dataStore.get("bitCoin");
         this.agent = agent;
     }
 
     @Override
     public void action() {
-        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol("stuffBuing"),
+        bitCoin = (List<Valuta>)getDataStore().get("bitCoin");
+        minimum = bitCoin.get(0).getMinimalPrice();
+        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol("stuffBuying"),
                 MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL),
                         MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL)));
 
         ACLMessage message = agent.receive(mt);
-        minimum = bitCoin.get(0).getMinimalPrice();
 
-        if (message != null){
+        while (message != null){
             if (message.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
                 ACLMessage noBidding = message.createReply();
                 noBidding.setContent(message.getContent());
+                noBidding.setPerformative(ACLMessage.CONFIRM);
                 agent.send(noBidding);
+                System.out.println("Agent " + agent.getLocalName() + " said: Resending price got!");
                 block();
-            }else {
+            }else if (message.getPerformative() == ACLMessage.REJECT_PROPOSAL) {
                 priceGot = Double.parseDouble(message.getContent());
                 if (priceGot > minimum){
                     ACLMessage replyConfirm = message.createReply();
                     replyConfirm.setPerformative(ACLMessage.CONFIRM);
-                    int discount = 1 + (int) (Math.random() * 10);
-                    System.out.println("Agent " + agent.getLocalName() + " said: The discount is " + discount + "%");
-                    replyConfirm.setContent(priceGot * discount / 100 + "");
+                    double discount = 1 + (int) (Math.random() * 10);
+                    double priceSaled = priceGot * (1 - discount/100);
+                    System.out.println("Agent " + agent.getLocalName() + " said: The discount is " + discount +
+                                    "%, so the price is - " + priceSaled);
+                    replyConfirm.setContent(priceSaled + "");
                     agent.send(replyConfirm);
                     block();
                 }else{
@@ -54,10 +58,12 @@ public class Trading extends Behaviour {
                     agent.send(replyDisconfirm);
                     outOfTrading = true;
                 }
+            }else {
+                System.out.println("Agent " + agent.getLocalName() + " said: WTF!");
             }
-        }else {
-            block();
+             message = agent.receive(mt);
         }
+        block();
     }
 
     @Override
