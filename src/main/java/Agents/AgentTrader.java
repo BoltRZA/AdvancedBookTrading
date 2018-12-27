@@ -17,7 +17,7 @@ public class AgentTrader extends Agent {
         super.setup();
         bitCoin = new ArrayList<Valuta>();
         createSettings4Traders(bitCoin);
-        DataStore ds =new DataStore();
+        DataStore ds = new DataStore();
         ds.put("bitCoin", bitCoin);
         addBehaviour(new FSM4Trader(this, ds));
     }

@@ -68,6 +68,7 @@ public class Waiting4Response extends Behaviour {
         if (bhvDone && agentMinimal != null){
             System.out.println("Agent " + agent.getLocalName() + " said: The round 1 winner is " +
                     agentMinimal.getLocalName());
+            System.out.println("_____________________________________________________");
             ACLMessage accept = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
             accept.setProtocol("stuffBuying");
             accept.setContent(foundMinimal + "");

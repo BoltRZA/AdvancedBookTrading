@@ -13,7 +13,6 @@ public class Requesting extends OneShotBehaviour {
     private Agent agent;
     private double tradersCounter;
 
-
     public Requesting(Agent agent, DataStore dataStore) {
         this.agent = agent;
         setDataStore(dataStore);

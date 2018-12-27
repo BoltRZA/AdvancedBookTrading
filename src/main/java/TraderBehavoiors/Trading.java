@@ -7,6 +7,7 @@ import jade.core.behaviours.DataStore;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class Trading extends Behaviour {
@@ -24,6 +25,7 @@ public class Trading extends Behaviour {
 
     @Override
     public void action() {
+        DecimalFormat format = new DecimalFormat("###.00");
         bitCoin = (List<Valuta>)getDataStore().get("bitCoin");
         minimum = bitCoin.get(0).getMinimalPrice();
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol("stuffBuying"),
@@ -31,14 +33,15 @@ public class Trading extends Behaviour {
                         MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL)));
 
         ACLMessage message = agent.receive(mt);
-
         while (message != null){
             if (message.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
                 ACLMessage noBidding = message.createReply();
                 noBidding.setContent(message.getContent());
                 noBidding.setPerformative(ACLMessage.CONFIRM);
                 agent.send(noBidding);
-                System.out.println("Agent " + agent.getLocalName() + " said: Resending price got!");
+                double price = Double.parseDouble(message.getContent());
+                System.out.println("Agent " + agent.getLocalName() + " said: Resending price got from the previous" +
+                        " round - " + format.format(price));
                 block();
             }else if (message.getPerformative() == ACLMessage.REJECT_PROPOSAL) {
                 priceGot = Double.parseDouble(message.getContent());
@@ -47,8 +50,14 @@ public class Trading extends Behaviour {
                     replyConfirm.setPerformative(ACLMessage.CONFIRM);
                     double discount = 1 + (int) (Math.random() * 10);
                     double priceSaled = priceGot * (1 - discount/100);
-                    System.out.println("Agent " + agent.getLocalName() + " said: The discount is " + discount +
-                                    "%, so the price is - " + priceSaled);
+                    if (priceSaled <= minimum){
+                        priceSaled = minimum;
+                        System.out.println("Agent " + agent.getLocalName() + " said: I'm offering my minimum now - " +
+                                format.format(priceSaled));
+                    }else {
+                        System.out.println("Agent " + agent.getLocalName() + " said: The discount is " + discount +
+                                "%, so the price is - " + format.format(priceSaled));
+                    }
                     replyConfirm.setContent(priceSaled + "");
                     agent.send(replyConfirm);
                     block();
@@ -60,6 +69,11 @@ public class Trading extends Behaviour {
                 }
             }else {
                 System.out.println("Agent " + agent.getLocalName() + " said: WTF!");
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
              message = agent.receive(mt);
         }

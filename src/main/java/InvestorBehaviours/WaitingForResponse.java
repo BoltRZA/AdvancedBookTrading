@@ -7,6 +7,7 @@ import jade.core.behaviours.DataStore;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class WaitingForResponse extends Behaviour{
     private AID agentMinimal;
     private boolean bhvDone = false;
     private double rcvCNT;
+    private int roundCounter = 1;
 
     public WaitingForResponse(Agent agent, DataStore dataStore) {
         setDataStore(dataStore);
@@ -29,6 +31,7 @@ public class WaitingForResponse extends Behaviour{
     public void action() {
         rcvCNT = Double.parseDouble(getDataStore().get("tradersCounter").toString());
         nowTraders = (List<AID>) getDataStore().get("confirmedTraders");
+        DecimalFormat format = new DecimalFormat("###.00");
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol("stuffBuying"), MessageTemplate.or(
                         MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
                         MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM)));
@@ -36,37 +39,48 @@ public class WaitingForResponse extends Behaviour{
         while (response != null) {
             if (response.getPerformative() == ACLMessage.CONFIRM) {
                     rcvCNT--;
-                    System.out.println("Agent " + agent.getLocalName() +" said: Agent's "
-                            + response.getSender().getLocalName() + " price is:" + response.getContent());
                 double price = Double.parseDouble(response.getContent());
+                System.out.println("Agent " + agent.getLocalName() +" said: Agent's "
+                            + response.getSender().getLocalName() + " price is - " + format.format(price));
                     if (price < foundMinimal) {
                     foundMinimal = price;
                     agentMinimal = response.getSender();
                     }
                         if (rcvCNT == 0) {
+                            roundCounter++;
                             rcvCNT = nowTraders.size();
                             ACLMessage replyReject = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
+                            replyReject.setProtocol("stuffBuying");
                             ACLMessage replyAccept = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                            replyAccept.setProtocol("stuffBuying");
                                 for (AID trd : nowTraders) {
-                                    if (trd != agentMinimal) {
+                                    if (!trd.equals(agentMinimal)) {
                                         replyReject.setContent(foundMinimal + "");
                                         replyReject.addReceiver(trd);
-                                    } else {
-                                        replyAccept.setContent(foundMinimal + " ");
-                                        replyAccept.addReceiver(trd);
                                     }
                                 }
+                            replyAccept.addReceiver(agentMinimal);
+                            replyAccept.setContent(foundMinimal + "");
+                            System.out.println("Agent " + agent.getLocalName() + " said: The round " + roundCounter +
+                            " winner is " + agentMinimal.getLocalName());
+                            System.out.println("Sending prices back for the next round..");
+                            System.out.println("______________________________________________________");
                             agent.send(replyAccept);
                             agent.send(replyReject);
+                            block();
                         }
-                block();
-                } else if (response.getPerformative() == ACLMessage.DISCONFIRM ) {
+            } else if (response.getPerformative() == ACLMessage.DISCONFIRM ) {
                 System.out.println("Agent " + response.getSender().getLocalName() + " is out of Trading!");
                 nowTraders.remove(response.getSender());
                 rcvCNT = nowTraders.size();
                 block();
                 }
-        response = myAgent.receive(mt);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            response = myAgent.receive(mt);
         }
             block();
 
