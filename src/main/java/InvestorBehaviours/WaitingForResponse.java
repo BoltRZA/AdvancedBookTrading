@@ -28,8 +28,13 @@ public class WaitingForResponse extends Behaviour{
 
 
     @Override
-    public void action() {
+    public void onStart() {
         rcvCNT = Double.parseDouble(getDataStore().get("tradersCounter").toString());
+        super.onStart();
+    }
+
+    @Override
+    public void action() {
         nowTraders = (List<AID>) getDataStore().get("confirmedTraders");
         DecimalFormat format = new DecimalFormat("###.00");
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol("stuffBuying"), MessageTemplate.or(
@@ -37,8 +42,8 @@ public class WaitingForResponse extends Behaviour{
                         MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM)));
         ACLMessage response = agent.receive(mt);
         while (response != null) {
+            rcvCNT--;
             if (response.getPerformative() == ACLMessage.CONFIRM) {
-                    rcvCNT--;
                 double price = Double.parseDouble(response.getContent());
                 System.out.println("Agent " + agent.getLocalName() +" said: Agent's "
                             + response.getSender().getLocalName() + " price is - " + format.format(price));
@@ -70,9 +75,8 @@ public class WaitingForResponse extends Behaviour{
                             block();
                         }
             } else if (response.getPerformative() == ACLMessage.DISCONFIRM ) {
-                System.out.println("Agent " + response.getSender().getLocalName() + " is out of Trading!");
+                System.out.println("Agent " + response.getSender().getLocalName() + " is out from Auction!");
                 nowTraders.remove(response.getSender());
-                rcvCNT = nowTraders.size();
                 block();
                 }
             try {
